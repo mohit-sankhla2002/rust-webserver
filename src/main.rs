@@ -18,13 +18,20 @@ fn handle_connection(mut stream:TcpStream) {
 
     stream.read(&mut buffer).unwrap();
 
-    let contents = fs::read_to_string("index.html").unwrap();
+    let get = b"GET / HTTP/1.1\r\n"; // the b as the prefix to the string makes sure that the string gets converted to byte slice 
 
-    let response = format!(
-        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-        contents.len(),
-        contents
-    );
-    stream.write(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
+    if buffer.starts_with(get) {
+        let contents = fs::read_to_string("index.html").unwrap();
+
+        let response = format!(
+            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+            contents.len(),
+            contents
+        );
+        stream.write(response.as_bytes()).unwrap();
+        stream.flush().unwrap();
+    } else {
+        let response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n";
+        stream.write(response.as_bytes()).unwrap();
+    }
 }
