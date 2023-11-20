@@ -1,6 +1,8 @@
 use std::net::{ TcpListener, TcpStream };
 use std::io::prelude::*;
 use std::fs;
+use std::thread;
+use std::time::Duration;
 
 fn main() {
     let listener = 
@@ -18,9 +20,22 @@ fn handle_connection(mut stream:TcpStream) {
 
     stream.read(&mut buffer).unwrap();
 
+    // routes here, then in the below if else condition: we can route the request to the controller using the routes matching given below. 
     let get = b"GET / HTTP/1.1\r\n"; // the b as the prefix to the string makes sure that the string gets converted to byte slice 
+    let sleep = b"GET /sleep HTTP/1.1\r\n";
 
     if buffer.starts_with(get) {
+        let contents = fs::read_to_string("index.html").unwrap();
+
+        let response = format!(
+            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+            contents.len(),
+            contents
+        );
+        stream.write(response.as_bytes()).unwrap();
+        stream.flush().unwrap();
+    } else if buffer.starts_with(sleep) {
+        thread::sleep(Duration::from_secs(5));
         let contents = fs::read_to_string("index.html").unwrap();
 
         let response = format!(
